@@ -63,3 +63,19 @@ def confusionMatrix(gt, pred, titre="Confusion matrix", plot=True):
         show()
     
     return (matrix, normedMatrix)
+
+
+def accuracySansC0(gt, classesPredites):
+    lignes, colonnes = shape(gt)
+    
+    gt_1d = reshape(gt, lignes*colonnes)
+    out_1d = reshape(classesPredites, lignes*colonnes)
+    
+    gt_1d_s0 = []
+    out_1d_s0 = []
+    for i in range(lignes*colonnes):
+        if(gt_1d[i] != 0):
+            gt_1d_s0.append(gt_1d[i])
+            out_1d_s0.append(out_1d[i])
+    
+    return accuracy_score(gt_1d_s0, out_1d_s0)
