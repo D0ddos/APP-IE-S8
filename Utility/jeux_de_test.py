@@ -49,3 +49,44 @@ def knnPropre():
     ioEval.classesToPng(propre, "../Workspace/3nn_propre.png")
     ioEval.confusionMatrix(gt, knnResult, "matrice de confusion 3nn")
     return None
+
+
+def effetPcaKnnKmeans():
+    import matplotlib.pyplot as plt
+    
+    img = datasets.openDataset("../Datasets/Salinas.mat", "salinas")
+    gt = datasets.openDataset("../Datasets/Salinas_gt.mat", "salinas_gt")
+    
+    nb_comp_a_tester = [1, 2, 3, 5, 10, 15, 20, 30, 40, 50, 100, 200]
+    acc_3nn = []
+    acc_kmeans = []
+    
+    img_pca = datasets.pca(img)
+    
+    for nb_composantes in nb_comp_a_tester:
+        print(nb_composantes)
+        img_temp_pca = img_pca[:, :, :nb_composantes]
+        
+        X, Y = datasets.createDatasetML(gt, img_temp_pca, "../Datasets/centres.txt")
+        
+        img_temp_3nn = traitements.knn(img_temp_pca, X, Y)
+        img_temp_kmeans = traitements.munkres(traitements.kmeans(img_temp_pca), gt)
+        
+        acc_3nn.append(ioEval.accuracySansC0(gt, img_temp_3nn))
+        acc_kmeans.append(ioEval.accuracySansC0(gt, img_temp_kmeans))
+    
+    plt.plot(nb_comp_a_tester, acc_3nn, "--r+", label="3nn")
+    plt.plot(nb_comp_a_tester, acc_kmeans, "--b+", label="kmeans")
+    plt.legend()
+    plt.xlabel("Nombre de composantes")
+    plt.ylabel("Accuracy (entre 0 et 1)")
+    x1,x2,y1,y2 = plt.axis()  
+    plt.axis((0,200,0,1))
+    plt.grid("..")
+    plt.show()
+
+
+def showPCA():
+	img = datasets.openDataset("../Datasets/Salinas.mat", "salinas")
+	img_pca = datasets.pca(img)
+	ioEval.bandesToPng(img_pca, [0, 1, 2], "../Workspace/pca.png")

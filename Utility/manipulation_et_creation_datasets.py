@@ -6,6 +6,7 @@ Created on Wed Mar 17 18:29:02 2021
 """
 
 from scipy.io import loadmat, savemat
+from sklearn.decomposition import PCA
 
 
 def openDataset(chemin, nomDictionaire):
@@ -41,3 +42,13 @@ def createDatasetML(gt, bandes, chemin="centres.txt", voisins=2):
                  Y.append(classe)
     return X, Y
 
+
+def pca(img_array_np):
+    H, W, p = img_array_np.shape
+    
+    X = img_array_np.reshape((-1, p))
+    
+    pca = PCA()
+    image_pca_sk = pca.fit_transform(X)
+    
+    return image_pca_sk.reshape((H, W, p))
