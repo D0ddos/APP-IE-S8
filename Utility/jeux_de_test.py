@@ -8,6 +8,7 @@ Created on Wed Mar 17 18:27:54 2021
 import manipulation_et_creation_datasets as datasets
 import traitements
 import exports_et_evaluations as ioEval
+import reseaux_de_neurones as rdn
 
 
 def creationDatasetFlou3x3():
@@ -90,3 +91,43 @@ def showPCA():
 	img = datasets.openDataset("../Datasets/Salinas.mat", "salinas")
 	img_pca = datasets.pca(img)
 	ioEval.bandesToPng(img_pca, [0, 1, 2], "../Workspace/pca.png")
+
+
+def rnn():
+    return None
+
+import numpy as np
+
+gt = datasets.openDataset("../Datasets/Salinas_gt.mat", "salinas_gt")
+img = datasets.openDataset("../Datasets/Salinas.mat", "salinas")
+lignes, colonnes = np.shape(gt)
+bandes = 10
+img_pca = datasets.pca(img)
+img_pca_norm = datasets.normaliserBandes(img_pca[:, :, :bandes])
+
+X, Y = datasets.createDatasetML(gt,
+                                img_pca_norm,
+                                "../Datasets/centres - sans classe 0.txt")
+
+Y = datasets.classeToActivatedVector(Y)
+
+model = rdn.modelRnnSimple(10, 16, 48)
+rdn.plotModel(model, "../Workspace/Rnn - 10.16.48.png")
+
+rdn.compillerModel(model)
+rdn.trainModel(model, X, Y, 500, 32)
+
+img_1d = np.reshape(img_pca_norm, (lignes * colonnes, bandes))
+predictions = model.predict(img_1d)
+
+print("application")
+predicted_classes_1d = np.zeros((lignes * colonnes), dtype=np.uint8)
+
+for i in range(lignes * colonnes):
+    predicted_classes_1d[i] = np.argmax(predictions[i, :]) + 1
+
+img_predicted = np.reshape(predicted_classes_1d, (lignes, colonnes))
+#%%
+ioEval.classesToPng(img_predicted, "../Workspace/rnn - 10.16.48.png")
+ioEval.confusionMatrix(gt, img_predicted, "matrice de confusion rnn")
+print(ioEval.accuracySansC0(gt, img_predicted))
