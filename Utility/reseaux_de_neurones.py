@@ -23,18 +23,6 @@ def modelRnnSimple(nb_entrees, nb_sorties, nb_neuronesCoucheInterne):
     return model
 
 
-def compillerModel(model):
-    model.compile(loss='binary_crossentropy',
-                  optimizer='adam',
-                  metrics=['accuracy'])
-    return None
-
-
-def trainModel(model, X, Y, epochs, batch_size):
-    model.fit(X, Y, batch_size, epochs)
-    return None
-
-
 def plotModel(model, chemin):
     plot_model(model, to_file=chemin, show_shapes=True)
     return None

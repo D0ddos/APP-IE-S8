@@ -114,8 +114,10 @@ Y = datasets.classeToActivatedVector(Y)
 model = rdn.modelRnnSimple(10, 16, 48)
 rdn.plotModel(model, "../Workspace/Rnn - 10.16.48.png")
 
-rdn.compillerModel(model)
-rdn.trainModel(model, X, Y, 500, 32)
+model.compile(loss='binary_crossentropy',
+              optimizer='adam',
+              metrics=['accuracy'])
+model.fit(X, Y, 32, 500)
 
 img_1d = np.reshape(img_pca_norm, (lignes * colonnes, bandes))
 predictions = model.predict(img_1d)
