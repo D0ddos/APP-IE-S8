@@ -5,6 +5,8 @@ Created on Wed Mar 17 18:27:54 2021
 @author: D0ddos
 """
 
+from time import time
+
 import manipulation_et_creation_datasets as datasets
 import traitements
 import exports_et_evaluations as ioEval
@@ -25,31 +27,37 @@ def exportClassesGt():
 
 
 def kmeansMunkresPropre():
-    img = datasets.openDataset("../Datasets/Flous/Salinas_flou_3x3.mat", "img")
+    img = datasets.openDataset("../Datasets/Salinas.mat", "salinas")
     gt = datasets.openDataset("../Datasets/Salinas_gt.mat", "salinas_gt")
     
+    t0 = time()
     clusters = traitements.kmeans(img)
+    print("Temps d'application du kmeans : {}s".format(time() - t0))
+    t0 = time()
     bonnes_classes = traitements.munkres(clusters, gt)
+    print("Temps d'application du munkres : {}s".format(time() - t0))
     
     propre = traitements.maskSansC0(bonnes_classes, gt)
     
-    ioEval.classesToPng(propre, "../Workspace/kmeans_3x3_munkres_propre.png")
+    ioEval.classesToPng(propre, "../Workspace/kmeans_munkres_propre.png")
     ioEval.confusionMatrix(gt, bonnes_classes, "Matrice de confusion kmeans")
-    return None
+    print(ioEval.accuracySansC0(gt, propre))
 
 
 def knnPropre():
     img = datasets.openDataset("../Datasets/Salinas.mat", "salinas")
     gt = datasets.openDataset("../Datasets/Salinas_gt.mat", "salinas_gt")
     
+    t0 = time()
     X, Y = datasets.createDatasetML(gt, img, "../Datasets/centres.txt")
+    print("Temps de création du dataset : {}s".format(time() - t0))
     knnResult = traitements.knn(img, X, Y)
     
     propre = traitements.maskSansC0(knnResult, gt)
     
     ioEval.classesToPng(propre, "../Workspace/3nn_propre.png")
     ioEval.confusionMatrix(gt, knnResult, "matrice de confusion 3nn")
-    return None
+    print(ioEval.accuracySansC0(gt, propre))
 
 
 def effetPcaKnnKmeans():
@@ -93,43 +101,94 @@ def showPCA():
 	ioEval.bandesToPng(img_pca, [0, 1, 2], "../Workspace/pca.png")
 
 
-def rnn():
-    return None
+def rnnProprePCA():
+    import numpy as np
+    
+    gt = datasets.openDataset("../Datasets/Salinas_gt.mat", "salinas_gt")
+    img = datasets.openDataset("../Datasets/Salinas.mat", "salinas")
+    
+    lignes, colonnes = np.shape(gt)
+    bandes = 10
+    img_pca = datasets.pca(img)
+    img_pca_norm = datasets.normaliserBandes(img_pca[:, :, :bandes])
+    
+    X, Y = datasets.createDatasetML(gt,
+                                    img_pca_norm,
+                                    "../Datasets/centres - sans classe 0.txt")
+    
+    Y = datasets.classeToActivatedVector(Y)
+    
+    model = rdn.modelRnnSimple(10, 16, 48)
+    rdn.plotModel(model, "../Workspace/Rnn - 10.16.48.png")
+    
+    model.compile(loss='binary_crossentropy',
+                  optimizer='adam',
+                  metrics=['accuracy'])
+    t0 = time()
+    model.fit(X, Y, 32, 500)
+    print("Temps d'entrainement du rnn : {}s".format(time() - t0))
+    
+    
+    img_1d = np.reshape(img_pca_norm, (lignes * colonnes, bandes))
+    
+    
+    print("application")
+    t0 = time()
+    predictions = model.predict(img_1d)
+    predicted_classes_1d = np.zeros((lignes * colonnes), dtype=np.uint8)
+    
+    for i in range(lignes * colonnes):
+        predicted_classes_1d[i] = np.argmax(predictions[i, :]) + 1
+    print("Temps d'application du rnn : {}s".format(time() - t0))
+    
+    img_predicted = np.reshape(predicted_classes_1d, (lignes, colonnes))
+    propre = traitements.maskSansC0(img_predicted, gt)
+    
+    ioEval.classesToPng(propre, "../Workspace/rnn - 10.16.48.png")
+    ioEval.confusionMatrix(gt, img_predicted, "matrice de confusion rnn")
+    print(ioEval.accuracySansC0(gt, img_predicted))
 
-import numpy as np
 
-gt = datasets.openDataset("../Datasets/Salinas_gt.mat", "salinas_gt")
-img = datasets.openDataset("../Datasets/Salinas.mat", "salinas")
-lignes, colonnes = np.shape(gt)
-bandes = 10
-img_pca = datasets.pca(img)
-img_pca_norm = datasets.normaliserBandes(img_pca[:, :, :bandes])
+def knnProprePCA():
+    img = datasets.openDataset("../Datasets/Salinas.mat", "salinas")
+    gt = datasets.openDataset("../Datasets/Salinas_gt.mat", "salinas_gt")
+    
+    bandes = 10
+    img_pca = datasets.pca(img)
+    img_pca_norm = datasets.normaliserBandes(img_pca[:, :, :bandes])
+    
+    X, Y = datasets.createDatasetML(gt,
+                                    img_pca_norm,
+                                    "../Datasets/centres - sans classe 0.txt")
+    
+    #X, Y = datasets.createDatasetML(gt, img, "../Datasets/centres.txt")
+    knnResult = traitements.knn(img_pca_norm, X, Y)
+    
+    propre = traitements.maskSansC0(knnResult, gt)
+    
+    ioEval.classesToPng(propre, "../Workspace/3nn_propre_PCA.png")
+    ioEval.confusionMatrix(gt, knnResult, "matrice de confusion 3nn")
+    print(ioEval.accuracySansC0(gt, propre))
 
-X, Y = datasets.createDatasetML(gt,
-                                img_pca_norm,
-                                "../Datasets/centres - sans classe 0.txt")
 
-Y = datasets.classeToActivatedVector(Y)
-
-model = rdn.modelRnnSimple(10, 16, 48)
-rdn.plotModel(model, "../Workspace/Rnn - 10.16.48.png")
-
-model.compile(loss='binary_crossentropy',
-              optimizer='adam',
-              metrics=['accuracy'])
-model.fit(X, Y, 32, 500)
-
-img_1d = np.reshape(img_pca_norm, (lignes * colonnes, bandes))
-predictions = model.predict(img_1d)
-
-print("application")
-predicted_classes_1d = np.zeros((lignes * colonnes), dtype=np.uint8)
-
-for i in range(lignes * colonnes):
-    predicted_classes_1d[i] = np.argmax(predictions[i, :]) + 1
-
-img_predicted = np.reshape(predicted_classes_1d, (lignes, colonnes))
-#%%
-ioEval.classesToPng(img_predicted, "../Workspace/rnn - 10.16.48.png")
-ioEval.confusionMatrix(gt, img_predicted, "matrice de confusion rnn")
-print(ioEval.accuracySansC0(gt, img_predicted))
+def kmeansMunkresProprePCA():
+    img = datasets.openDataset("../Datasets/Salinas.mat", "salinas")
+    gt = datasets.openDataset("../Datasets/Salinas_gt.mat", "salinas_gt")
+    
+    bandes = 10
+    img_pca = datasets.pca(img)
+    img = datasets.normaliserBandes(img_pca[:, :, :bandes])
+    
+    
+    t0 = time()
+    clusters = traitements.kmeans(img)
+    print("Temps d'application du kmeans : {}s".format(time() - t0))
+    t0 = time()
+    bonnes_classes = traitements.munkres(clusters, gt)
+    print("Temps d'application du munkres : {}s".format(time() - t0))
+    
+    propre = traitements.maskSansC0(bonnes_classes, gt)
+    
+    ioEval.classesToPng(propre, "../Workspace/kmeans_munkres_propre_pca.png")
+    ioEval.confusionMatrix(gt, bonnes_classes, "Matrice de confusion kmeans")
+    print(ioEval.accuracySansC0(gt, propre))
