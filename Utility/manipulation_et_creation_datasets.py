@@ -6,6 +6,10 @@ Created on Wed Mar 17 18:29:02 2021
 """
 
 from scipy.io import loadmat, savemat
+from sklearn.decomposition import PCA
+from numpy import shape, zeros, float32, array
+from numpy import max as npmax
+from numpy import min as npmin
 
 
 def openDataset(chemin, nomDictionaire):
@@ -39,5 +43,43 @@ def createDatasetML(gt, bandes, chemin="centres.txt", voisins=2):
             for colonne in range(colonne_c - voisins, colonne_c + voisins + 1):
                  X.append(bandes[ligne, colonne, :])
                  Y.append(classe)
-    return X, Y
+    return array(X, dtype=float32), array(Y, dtype=float32)
 
+
+def pca(img_array_np):
+    H, W, p = img_array_np.shape
+    
+    X = img_array_np.reshape((-1, p))
+    
+    pca = PCA()
+    image_pca_sk = pca.fit_transform(X)
+    
+    return image_pca_sk.reshape((H, W, p))
+
+
+def normaliserBandes(img):
+    """Retourne une verion de img où chaue bande est normalisée."""
+    lignes, colonnes, bandes = shape(img)
+    img_norm = zeros((lignes, colonnes, bandes), dtype=float32)
+    
+    for bande in range(bandes):
+        mini = npmin(img[:, :, bande])
+        img_norm[:, :, bande] = img[:, :, bande] - mini
+        maxi = npmax(img_norm[:, :, bande])
+        img_norm[:, :, bande] = img_norm[:, :, bande] / maxi
+        
+    return img_norm
+
+
+def classeToActivatedVector(Y, nb_classes=16, classe_min=1):
+    """Y est une liste de classes (pour entrainer un modèle de ML).
+    Retourne une liste contenant des vecteurs qui représentent les classes."""
+    Y_vect = []
+    
+    for y in Y:
+        Y_vect.append([])
+        for i in range(nb_classes):
+            Y_vect[-1].append(0.0)
+        Y_vect[-1][int(y) - classe_min] = 1.0
+    
+    return array(Y_vect, dtype=float32)

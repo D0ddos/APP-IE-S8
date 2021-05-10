@@ -4,6 +4,7 @@ Created on Wed Mar 17 18:28:46 2021
 
 @author: D0ddos
 """
+from time import time
 
 from numpy import shape, reshape, zeros, ones, uint8, int16, float16
 from numpy import max as npmax
@@ -32,10 +33,14 @@ def knn(img, X, Y, n_voisins=3):
     lignes, colonnes, bandes = shape(img)
     
     knn = KNeighborsClassifier(n_neighbors=n_voisins)
+    t0 = time()
     knn.fit(X, Y)
+    print("Temps d'entrainement du knn : {}s".format(time() - t0))
     
     pixels = img.reshape((lignes * colonnes, bandes))
+    t0 = time()
     classes = knn.predict(pixels)
+    print("Temps d'application du knn : {}s".format(time() - t0))
     
     return classes.reshape((lignes, colonnes))
 

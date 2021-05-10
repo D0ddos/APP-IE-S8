@@ -6,8 +6,10 @@ Created on Wed Mar 17 18:28:26 2021
 """
 
 from numpy import zeros, shape, reshape, float32
+from numpy import max as npmax
+from numpy import min as npmin
 from matplotlib.pyplot import imsave, matshow, colorbar, title, show
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, accuracy_score
 
 
 def classesToPng(array, nom_fichier="classes.png", couleurs=[]):
@@ -40,6 +42,21 @@ def classesToPng(array, nom_fichier="classes.png", couleurs=[]):
             img[l, c, :] = couleurs[array[l, c]]
     
     imsave(nom_fichier, img)
+    return None
+
+
+def bandesToPng(img, bandes=[0, 1, 2], nom_fichier="export.png"):
+    lignes, colonnes, _ = shape(img)
+    
+    png = zeros([lignes, colonnes, 3], dtype=float32)
+    
+    for i in [0, 1, 2]:
+        mini = npmin(img[:, :, bandes[i]])
+        png[:, :, i] = img[:, :, bandes[i]] - mini
+        maxi = npmax(png[:, :, i])
+        png[:, :, i] = png[:, :, i] / maxi
+    
+    imsave(nom_fichier, png)
     return None
 
 
