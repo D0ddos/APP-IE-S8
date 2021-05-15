@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Mar 17 18:29:02 2021
+Created on Mar 17 2021
+
+Outils relatifs aux images hyperspectrales et vérités terrains.
 
 @author: D0ddos
 """
@@ -69,17 +71,3 @@ def normaliserBandes(img):
         img_norm[:, :, bande] = img_norm[:, :, bande] / maxi
         
     return img_norm
-
-
-def classeToActivatedVector(Y, nb_classes=16, classe_min=1):
-    """Y est une liste de classes (pour entrainer un modèle de ML).
-    Retourne une liste contenant des vecteurs qui représentent les classes."""
-    Y_vect = []
-    
-    for y in Y:
-        Y_vect.append([])
-        for i in range(nb_classes):
-            Y_vect[-1].append(0.0)
-        Y_vect[-1][int(y) - classe_min] = 1.0
-    
-    return array(Y_vect, dtype=float32)

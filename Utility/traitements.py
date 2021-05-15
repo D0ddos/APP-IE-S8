@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Mar 17 18:28:46 2021
+Created on Mar 17 2021
+
+Fonctions de traitements classiques (dont ML) de datasets
 
 @author: D0ddos
 """

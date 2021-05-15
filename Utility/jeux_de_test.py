@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Mar 17 18:27:54 2021
+Created on Mar 17 2021
+
+Fichier contenant des exemples d'utilisation des bibliothèques
 
 @author: D0ddos
 """
@@ -42,6 +44,7 @@ def kmeansMunkresPropre():
     ioEval.classesToPng(propre, "../Workspace/kmeans_munkres_propre.png")
     ioEval.confusionMatrix(gt, bonnes_classes, "Matrice de confusion kmeans")
     print(ioEval.accuracySansC0(gt, propre))
+    return None
 
 
 def knnPropre():
@@ -58,9 +61,11 @@ def knnPropre():
     ioEval.classesToPng(propre, "../Workspace/3nn_propre.png")
     ioEval.confusionMatrix(gt, knnResult, "matrice de confusion 3nn")
     print(ioEval.accuracySansC0(gt, propre))
+    return None
 
 
 def effetPcaKnnKmeans():
+    """Trance un graphique présentant l'effet du nombre de bandes de la PCA sur l'accuracy du Knn et du Kmeans."""
     import matplotlib.pyplot as plt
     
     img = datasets.openDataset("../Datasets/Salinas.mat", "salinas")
@@ -93,15 +98,19 @@ def effetPcaKnnKmeans():
     plt.axis((0,max(nb_comp_a_tester),0,1))
     plt.grid("..")
     plt.show()
+    return None
 
 
 def showPCA():
-	img = datasets.openDataset("../Datasets/Salinas.mat", "salinas")
-	img_pca = datasets.pca(img)
-	ioEval.bandesToPng(img_pca, [0, 1, 2], "../Workspace/pca.png")
+    """Représentation des trois premières composantes de la PCA."""
+    img = datasets.openDataset("../Datasets/Salinas.mat", "salinas")
+    img_pca = datasets.pca(img)
+    ioEval.bandesToPng(img_pca, [0, 1, 2], "../Workspace/pca.png")
+    return None
 
 
 def rnnProprePCA():
+    """Création, entrainement et application d'un réseau de neurones artificiels."""
     import numpy as np
     
     gt = datasets.openDataset("../Datasets/Salinas_gt.mat", "salinas_gt")
@@ -116,8 +125,10 @@ def rnnProprePCA():
                                     img_pca_norm,
                                     "../Datasets/centres - sans classe 0.txt")
     
-    Y = datasets.classeToActivatedVector(Y)
+    Y = rdn.classeToActivatedVector(Y)
     
+    
+    print("Création du modèle et entrainement...")
     model = rdn.modelRnnSimple(10, 16, 48)
     rdn.plotModel(model, "../Workspace/Rnn - 10.16.48.png")
     
@@ -129,11 +140,9 @@ def rnnProprePCA():
     print("Temps d'entrainement du rnn : {}s".format(time() - t0))
     
     
-    img_1d = np.reshape(img_pca_norm, (lignes * colonnes, bandes))
-    
-    
-    print("application")
+    print("Application...")
     t0 = time()
+    img_1d = np.reshape(img_pca_norm, (lignes * colonnes, bandes))
     predictions = model.predict(img_1d)
     predicted_classes_1d = np.zeros((lignes * colonnes), dtype=np.uint8)
     
@@ -144,9 +153,12 @@ def rnnProprePCA():
     img_predicted = np.reshape(predicted_classes_1d, (lignes, colonnes))
     propre = traitements.maskSansC0(img_predicted, gt)
     
+    
+    print("Evaluation des performances...")
     ioEval.classesToPng(propre, "../Workspace/rnn - 10.16.48.png")
     ioEval.confusionMatrix(gt, img_predicted, "matrice de confusion rnn")
     print(ioEval.accuracySansC0(gt, img_predicted))
+    return None
 
 
 def knnProprePCA():
@@ -161,7 +173,6 @@ def knnProprePCA():
                                     img_pca_norm,
                                     "../Datasets/centres - sans classe 0.txt")
     
-    #X, Y = datasets.createDatasetML(gt, img, "../Datasets/centres.txt")
     knnResult = traitements.knn(img_pca_norm, X, Y)
     
     propre = traitements.maskSansC0(knnResult, gt)
@@ -169,6 +180,7 @@ def knnProprePCA():
     ioEval.classesToPng(propre, "../Workspace/3nn_propre_PCA.png")
     ioEval.confusionMatrix(gt, knnResult, "matrice de confusion 3nn")
     print(ioEval.accuracySansC0(gt, propre))
+    return None
 
 
 def kmeansMunkresProprePCA():
@@ -191,6 +203,7 @@ def kmeansMunkresProprePCA():
     ioEval.classesToPng(propre, "../Workspace/kmeans_munkres_propre_pca.png")
     ioEval.confusionMatrix(gt, bonnes_classes, "Matrice de confusion kmeans")
     print(ioEval.accuracySansC0(gt, propre))
+    return None
 
 
 def spectrographe():
@@ -198,3 +211,4 @@ def spectrographe():
     gt = datasets.openDataset("../Datasets/Salinas_gt.mat", "salinas_gt")
     
     ioEval.spectrographe(img, gt, 8, "../Workspace/spectre_8.png")
+    return None

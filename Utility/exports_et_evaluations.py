@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Mar 17 18:28:26 2021
+Created on Mar 17 2021
+
+Export des résultats de ML et graphiques divers
 
 @author: D0ddos
 """
