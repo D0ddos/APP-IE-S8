@@ -90,7 +90,7 @@ def effetPcaKnnKmeans():
     plt.xlabel("Nombre de composantes")
     plt.ylabel("Accuracy (entre 0 et 1)")
     x1,x2,y1,y2 = plt.axis()  
-    plt.axis((0,200,0,1))
+    plt.axis((0,max(nb_comp_a_tester),0,1))
     plt.grid("..")
     plt.show()
 
@@ -179,7 +179,6 @@ def kmeansMunkresProprePCA():
     img_pca = datasets.pca(img)
     img = datasets.normaliserBandes(img_pca[:, :, :bandes])
     
-    
     t0 = time()
     clusters = traitements.kmeans(img)
     print("Temps d'application du kmeans : {}s".format(time() - t0))
@@ -192,3 +191,10 @@ def kmeansMunkresProprePCA():
     ioEval.classesToPng(propre, "../Workspace/kmeans_munkres_propre_pca.png")
     ioEval.confusionMatrix(gt, bonnes_classes, "Matrice de confusion kmeans")
     print(ioEval.accuracySansC0(gt, propre))
+
+
+def spectrographe():
+    img = datasets.openDataset("../Datasets/Salinas.mat", "salinas")
+    gt = datasets.openDataset("../Datasets/Salinas_gt.mat", "salinas_gt")
+    
+    ioEval.spectrographe(img, gt, 8, "../Workspace/spectre_8.png")

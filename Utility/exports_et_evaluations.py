@@ -5,11 +5,14 @@ Created on Wed Mar 17 18:28:26 2021
 @author: D0ddos
 """
 
-from numpy import zeros, shape, reshape, float32
+from numpy import zeros, array, shape, reshape, count_nonzero, dot, float32, int8
 from numpy import max as npmax
 from numpy import min as npmin
+from numpy import sum as npsum
 from matplotlib.pyplot import imsave, matshow, colorbar, title, show
+from matplotlib.pyplot import plot, xlabel, ylabel, fill_between, legend, axis, grid, savefig
 from sklearn.metrics import confusion_matrix, accuracy_score
+from math import sqrt
 
 
 def classesToPng(array, nom_fichier="classes.png", couleurs=[]):
@@ -96,3 +99,86 @@ def accuracySansC0(gt, classesPredites):
             out_1d_s0.append(out_1d[i])
     
     return accuracy_score(gt_1d_s0, out_1d_s0)
+
+
+def spectrographe(img, gt, classe, nom_fichier="Spectre.png", minmax=(0, 8500)):
+    """Trace le spectrographe de la classe choisie et l'enregistre"""
+    assert(shape(img[:, :, 0]) == shape(gt))
+    
+    lignes, colonnes, nb_bandes = shape(img)
+    MINI, MAXI = minmax
+    
+    # Création d'un masque pour garder uniquement les pixels de la classe
+    masque = zeros((lignes, colonnes), dtype=int8)
+    for ligne in range(lignes):
+        for colonne in range(colonnes):
+            if(gt[ligne, colonne] == classe):
+                masque[ligne, colonne] = 1
+    
+    
+    # Calcul du spectre
+    n = count_nonzero(masque) # nombre de pixels de cette classe
+    luminances = []
+    ecartsTypes = []
+    for bande in range(nb_bandes):
+        img_bande = img[:, :, bande]
+        
+        img_masquee = img_bande * masque
+        
+        luminances.append(npsum(img_masquee))
+        
+        moyenne = luminances[-1] / n
+        ecarts = reshape((img_bande - moyenne) * masque, lignes * colonnes)
+        sommeCarree = dot(ecarts, ecarts)
+        ecartsTypes.append(sqrt(sommeCarree / n))
+    
+    spectre = (1/n) * array(luminances)
+    borne99haute = spectre + 3 * array(ecartsTypes)
+    borne99basse = spectre - 3 * array(ecartsTypes)
+    
+    borne99basse[borne99basse < MINI] = MINI
+    borne99haute[borne99haute > MAXI] = MAXI
+    
+    
+    # Dessin
+    plot(range(nb_bandes),
+         spectre,
+         color=[0.4, 0.0, 0.4, 1.0],
+         label="Intensité moyenne")
+    xlabel("Bande")
+    ylabel("Intennsité")
+    title("Spectre de la classe {}".format(classe))
+    
+    # Dispertion des données
+    fill_between(range(nb_bandes),
+                     borne99haute,
+                     borne99basse,
+                     color=[1.0, 0.5, 1.0, 0.8],
+                     label="Zone des 99%\n(3 fois l'écart-type minoré par 0)")
+    
+    # Water absorbtion bands
+    fill_between([108, 112],
+                     MINI, MAXI,
+                     color=(.5, .5, .5, .5),
+                     label="Bandes d'absorbtion de l'eau\n(non présentes dans la version 'corrected')")
+    fill_between([154, 167],
+                     MINI, MAXI,
+                     color=(.5, .5, .5, .5))
+    plot([224, 224],
+             [MINI, MAXI],
+             color=(.5, .5, .5, .5))
+    
+    # Mise en forme
+    legend(bbox_to_anchor=(0.5, -0.55), loc="lower center")
+    axis([0, nb_bandes, MINI, MAXI])
+    grid(True,
+         'major',
+         'both',
+         linestyle='dotted')
+    
+    savefig(nom_fichier,
+            format="png",
+            dpi=200)
+        
+    show()
+    
